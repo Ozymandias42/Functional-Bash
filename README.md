@@ -14,6 +14,7 @@ filter() {
     echo ${ret[@]}
 }
 ```
+Call via `filter funcName "${arrName[@]}"`
 
 map(_callback_, arr[]) => results[]
 ```bash
@@ -26,6 +27,21 @@ map() {
     echo  $outarr
 }
 ```
+Call via `filter funcName "${arrName[@]}"`
+
+chain(_callback[]_, arr[]) => results[]
+```bash
+chain() {
+    funcs=("${!1}")
+    input=("${!2}")
+    res=(${input[@]})
+    for func in ${funcs[@]}; do
+            res=( $(map $func res[@]) )
+    done
+    echo "${res[@]}"
+}
+```
+Call via `chain funcs[@] arr[@]`
 
 forEach(_callback_, arr[]) => void
 ```bash
@@ -36,6 +52,8 @@ forEach() {
     done
 }
 ```
+Call via `filter funcName "${arrName[@]}"`
+
 _Special forEachParallel._  
 _Uses the `coproc` directive in bash to run each function call asynchronously_
 forEachParallel(_callback_, arr[]) => void
@@ -48,3 +66,4 @@ forEachParallel() {
     done
 }
 ```
+Call via `filter funcName "${arrName[@]}"`
