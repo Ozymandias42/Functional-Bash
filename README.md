@@ -36,7 +36,8 @@ chain() {
     input=("${!2}")
     res=(${input[@]})
     for func in ${funcs[@]}; do
-            res=( $(map $func res[@]) )
+            res=( $(map $func res[@]) ) #NOTE: uses referential map. NOT the one above.
+#Altern.    res=( $(map $func ${res[@]} )
     done
     echo "${res[@]}"
 }
