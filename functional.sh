@@ -25,7 +25,8 @@ filter() {
     echo ${ret[@]}
 }
 
-map() {
+#Usage refmap callback arr[@] => []
+refmap() {
     outarr=()
     tmparr=("${!2}")
     for item in ${tmparr[@]}; do
@@ -34,13 +35,14 @@ map() {
     echo ${outarr[@]}
 }
 
+#Usage map callback ${arr[@]}
 map() {
     outarr=()
-    tmparr=(${@:2})
-    for (( i=1 ; i<=${#tmparr[@]} ; i++ )); do
-        outarr[$i]=$($1 ${tmparr[$i]})
+    tmparr=("${@:2}")
+    for item in ${tmparr[@]}; do
+        outarr=( ${outarr[@]} $($1 $item) )
     done
-    echo  $outarr
+    echo ${outarr[@]}
 }
 
 #Usage chain funcArr[] value[]
@@ -53,6 +55,44 @@ chain() {
     done
     echo "${res[@]}"
 }
+
+#Usage foldr callback [$init] arr[@]
+reffoldr() {
+    fun=${1}
+    [[ $# -eq 3 ]] && init=("${2}")
+    arr=("${!3:-${!2}}")
+    res=${init:-0}
+    for i in ${arr[@]}; do
+        res=( $($fun $res $i ) )
+    done
+    echo ${res[@]}  
+}
+
+#Usage foldr callback ${arr[@]}
+foldr() {
+    fun=${1}
+    arr=("${@:2}")
+    res=${init:-0}
+    for i in ${arr[@]}; do
+        res=( $($fun $res $i ) )
+    done
+    echo ${res[@]}  
+}
+
+#usage: unfold callback [$init] $limit [$step] => []
+unfold() {
+    fun=${1}
+    [[ $# -eq 3 ]] && init=("${2}") || init=0
+    limit=${3:-$2}
+    [[ $# -eq 4 ]] && inc=("${4}") || step=1
+    out=()
+    range=( $(seq $init $step $limit)  ) 
+    for i in ${range[@]} ; do
+        out=( ${out[@]} $($fun $i) )
+    done
+    echo ${out[@]}
+}
+
 
 forEachParallel() {
 #$1=callback $2..N array to act on.

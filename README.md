@@ -44,6 +44,52 @@ chain() {
 ```
 Call via `chain funcs[@] arr[@]`
 
+referential foldr(_callback_ [init] arr[]) => result
+```bash
+#Usage foldr callback [$init] arr[@]
+reffoldr() {
+    fun=${1}
+    [[ $# -eq 3 ]] && init=("${2}")
+    arr=("${!3:-${!2}}")
+    res=${init:-0}
+    for i in ${arr[@]}; do
+        res=( $($fun $res $i ) )
+    done
+    echo ${res[@]}  
+}
+```
+
+foldr(_callback_ arg[@]) => result
+```bash
+#Usage foldr callback ${arr[@]}
+foldr() {
+    fun=${1}
+    arr=("${@:2}")
+    res=${init:-0}
+    for i in ${arr[@]}; do
+        res=( $($fun $res $i ) )
+    done
+    echo ${res[@]}  
+}
+```
+
+unfold(_callback_ [init] limit [step]) => []
+```bash
+#usage: unfold callback [$init] $limit [$step] => []
+unfold() {
+    fun=${1}
+    [[ $# -eq 3 ]] && init=("${2}") || init=0
+    limit=${3:-$2}
+    [[ $# -eq 4 ]] && inc=("${4}") || step=1
+    out=()
+    range=( $(seq $init $step $limit)  ) 
+    for i in ${range[@]} ; do
+        out=( ${out[@]} $($fun $i) )
+    done
+    echo ${out[@]}
+}
+```
+
 forEach(_callback_, arr[]) => void
 ```bash
 forEach() {
