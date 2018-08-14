@@ -18,16 +18,30 @@ Call via `filter funcName "${arrName[@]}"`
 
 map(_callback_, arr[]) => results[]
 ```bash
+#Usage map callback ${arr[@]}
 map() {
     outarr=()
-    tmparr=(${@:2})
-    for (( i=1 ; i<=${#tmparr[@]} ; i++ )); do
-        outarr[$i]=$($1 ${tmparr[$i]})
+    tmparr=("${@:2}")
+    for item in ${tmparr[@]}; do
+        outarr=( ${outarr[@]} $($1 $item) )
     done
-    echo  $outarr
+    echo ${outarr[@]}
 }
 ```
-Call via `filter funcName "${arrName[@]}"`
+Call via `map funcName "${arrName[@]}"`
+
+referential map(_callback_, arr[@]) => results[]
+```bash
+#Usage refmap callback arr[@] => []
+refmap() {
+    outarr=()
+    tmparr=("${!2}")
+    for item in ${tmparr[@]}; do
+        outarr=( ${outarr[@]} $($1 $item) )
+    done
+    echo ${outarr[@]}
+}
+```
 
 chain(_callback[]_, arr[]) => results[]
 ```bash
@@ -36,7 +50,7 @@ chain() {
     input=("${!2}")
     res=(${input[@]})
     for func in ${funcs[@]}; do
-            res=( $(map $func res[@]) ) #NOTE: uses referential map. NOT the one above.
+            res=( $(map $func res[@]) ) #NOTE: uses referential map. 
 #Altern.    res=( $(map $func ${res[@]} )
     done
     echo "${res[@]}"
