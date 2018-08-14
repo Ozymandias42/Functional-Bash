@@ -113,7 +113,6 @@ forEach() {
     done
 }
 ```
-Call via `filter funcName "${arrName[@]}"`
 
 _Special forEachParallel._  
 _Uses the `coproc` directive in bash to run each function call asynchronously_
@@ -127,4 +126,3 @@ forEachParallel() {
     done
 }
 ```
-Call via `filter funcName "${arrName[@]}"`
