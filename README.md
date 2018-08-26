@@ -104,7 +104,7 @@ unfold() {
 }
 ```
 
-zip(arr1[], arr2[]) => arr3[]
+zip(arr1[], arr2[]) => result[]
 ```bash
 zip() {
     arr1=( "${!1}" )
