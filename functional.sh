@@ -5,7 +5,7 @@ filter() {
     ret=()
     inc=1
     for i in ${arr[@]}; do
-        [[ $($1 $i) -eq 0 ]] && { ret[$inc]=$i ; inc=$(($inc+1)) }
+        [[ $($1 $i) -eq 0 ]] && { ret[$inc]=$i ; inc=$(($inc+1)) ; } 
     done
     echo ${ret[@]}
 }
@@ -93,6 +93,34 @@ unfold() {
     echo ${out[@]}
 }
 
+zip() {
+    arr1=( "${!1}" )
+    arr2=( "${!2}" )
+    [[ ${#arr1[@]} -ge ${#arr2[@]} ]] && use=1 || use=2
+    [[ ${#arr1[@]} -eq ${#arr2[@]} ]] && use=1
+    out=()
+
+    next() {
+        lastindex=$1
+        arr=( "${!2}" )
+        if [[ "$lastindex" -ne $((${#arr[@]}-1)) ]]; then
+            echo $(($lastindex+1))
+        else
+            next $(($lastindex-${#arr[@]})) arr[@]
+        fi
+    }
+
+    index1=0
+    index2=0
+    index=0
+    while [[ $index -ne $( [[ $use -eq 1 ]] && echo ${#arr1[@]} || echo ${#arr2[@]} ) ]] ; do
+        out=( ${out[@]} \'${arr1[$index1]} ${arr2[$index2]}\' )
+        index1=$(next $index arr1[@])
+        index2=$(next $index arr2[@])
+        index=$(($index+1))
+    done
+    echo "${out[@]}"
+}
 
 forEachParallel() {
 #$1=callback $2..N array to act on.
