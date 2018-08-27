@@ -113,13 +113,29 @@ zip() {
     index1=0
     index2=0
     index=0
+    sep="${3:-" "}" #separator for resulting tuples. $3 if set. else :
     while [[ $index -ne $( [[ $use -eq 1 ]] && echo ${#arr1[@]} || echo ${#arr2[@]} ) ]] ; do
-        out=( ${out[@]} \'${arr1[$index1]} ${arr2[$index2]}\' )
+        out=( ${out[@]} \'${arr1[$index1]}$sep${arr2[$index2]}\' )
         index1=$(next $index arr1[@])
         index2=$(next $index arr2[@])
         index=$(($index+1))
     done
     echo "${out[@]}"
+}
+
+zipWith() {
+    func=$1
+    arr1=( "${!2}" )
+    arr2=( "${!3}" )
+    tuplesep="${4:-":"}"
+    tmpres=$(zip arr1[@] arr2[@] $tuplesep)
+    res=()
+    for i in ${tmpres[@]}; do
+        arg1=$(echo $i|cut -d "'" -f 2|cut -d"$tuplesep" -f 1)
+        arg2=$(echo $i|cut -d"$tuplesep" -f 2|cut -d"'" -f 1)
+        res=( ${res[@]} $($func $arg1 $arg2) )
+    done
+    echo ${res[@]}
 }
 
 forEachParallel() {
