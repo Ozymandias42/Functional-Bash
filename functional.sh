@@ -63,9 +63,9 @@ map() {
 
 prefmap() {
     local -n outarr=${3}
-    tmparr=("${!2}")
-    for ((i=0;i<${#tmparr[@]};i++)); do
-        outarr[$i]=$($1 ${tmparr[$i]})
+    input_arr=("${!2}")
+    for ((i=0;i<${#input_arr[@]};i++)); do
+        outarr[$i]=$($1 ${input_arr[$i]})
     done
 }
 
@@ -75,11 +75,24 @@ chain() {
     input=("${!2}")
     res=(${input[@]})
     for func in ${funcs[@]}; do
-            res=( $(map $func res[@]) )
+            res=( $(refmap $func res[@]) )
     done
     echo "${res[@]}"
 }
 
+prefchain() {
+    local funcs=("${!1}")
+    local input_arr=("${!2}")
+    local -n prefchain_res=${3}
+    
+    for (( i=0;i<${#input_arr[@]};i++ )); do 
+        prefchain_res[$i]=$input_arr[$i]; 
+    done
+
+    for func in ${funcs[@]}; do
+        prefmap $func prefchain_res[@] prefchain_res
+    done
+}
 #Usage foldr callback [$init] arr[@]
 reffoldr() {
     fun=${1}
