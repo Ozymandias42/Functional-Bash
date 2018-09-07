@@ -45,8 +45,8 @@ preffilter() {
 refmap() {
     outarr=()
     tmparr=("${!2}")
-    for item in ${tmparr[@]}; do
-        outarr=( ${outarr[@]} $($1 $item) )
+    for ((i=0;i<${#tmparr[@]};i++)); do
+        outarr[$i]=$($1 ${tmparr[$i]})
     done
     echo ${outarr[@]}
 }
@@ -55,10 +55,18 @@ refmap() {
 map() {
     outarr=()
     tmparr=("${@:2}")
-    for item in ${tmparr[@]}; do
-        outarr=( ${outarr[@]} $($1 $item) )
+    for ((i=0;i<${#tmparr[@]};i++)); do
+        outarr[$i]=$($1 ${tmparr[$i]})
     done
     echo ${outarr[@]}
+}
+
+prefmap() {
+    local -n outarr=${3}
+    tmparr=("${!2}")
+    for ((i=0;i<${#tmparr[@]};i++)); do
+        outarr[$i]=$($1 ${tmparr[$i]})
+    done
 }
 
 #Usage chain funcArr[] value[]
