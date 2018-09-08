@@ -41,13 +41,14 @@ testFactory() {
     #           2 = return result via global variable with declare -n
     #           3 = take two lists as input
     #           4 = take two lists as input return via global variable with declare -n 
-    local -A res
     case $functype in 
         0)  res=($($func2test $callback ${arr2test[@]})) ;;
         1)  res=($($func2test $callback arr2test[@])) ;;
-        2)  $func2test $callback arr2test[@] res ;;
+        2)  local -A res
+            $func2test $callback arr2test[@] res ;;
         3)  res=($($func2test callback[@] arr2test[@])) ;;
-        4)  $func2test callback[@] arr2test[@] res ;;
+        4)  local -A res
+            $func2test callback[@] arr2test[@] res ;;
     esac
     reslength=${#res[@]}
 
