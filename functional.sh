@@ -86,7 +86,7 @@ prefchain() {
     local -n prefchain_res=${3}
     
     for (( i=0;i<${#input_arr[@]};i++ )); do 
-        prefchain_res[$i]=$input_arr[$i]; 
+        prefchain_res[$i]=${input_arr[$i]}; 
     done
 
     for func in ${funcs[@]}; do
@@ -109,9 +109,9 @@ reffoldr() {
 foldr() {
     fun=${1}
     arr=("${@:2}")
-    res=${init:-0}
+    res=0
     for i in ${arr[@]}; do
-        res=( $($fun $res $i ) )
+        res=( $($fun "$res" "$i" ) )
     done
     echo ${res[@]}  
 }
@@ -131,44 +131,45 @@ unfold() {
 }
 
 refzip() {
-    arr1=( "${!1}" )
-    arr2=( "${!2}" )
-    local -n refzip_out=${3}
-    
-    [[ ${#arr1[@]} -ge ${#arr2[@]} ]] && use=2 || use=1
-    [[ ${#arr1[@]} -eq ${#arr2[@]} ]] && use=1
-
-    index=0
-    sep="${4:-" "}" #separator for resulting tuples. $3 if set. else :
-    while [[ $index -le $( [[ $use -eq 1 ]] && echo ${#arr1[@]} || echo ${#arr2[@]} ) ]] ; do
-        refzip_out[$index]=\'${arr1[$index]}$sep${arr2[$index]}\'
-        index=$(($index+1))
-    done
-    echo ${zip_out[@]}
-}
-
-zip() {
-    arr1=( "${!1}" )
-    arr2=( "${!2}" )
-    zip_out=()
+    local arr1=( "${!1}" )
+    local arr2=( "${!2}" )
+    local zip_out=()
     
     [[ ${#arr1[@]} -ge ${#arr2[@]} ]] && use=2 || use=1
     [[ ${#arr1[@]} -eq ${#arr2[@]} ]] && use=1
 
     index=0
     sep="${3:-" "}" #separator for resulting tuples. $3 if set. else :
-    while [[ $index -le $( [[ $use -eq 1 ]] && echo ${#arr1[@]} || echo ${#arr2[@]} ) ]] ; do
-        zip_out[$index]=\'${arr1[$index]}$sep${arr2[$index]}\'
+    until [[ $index -eq $( [[ $use -eq 1 ]] && echo ${#arr1[@]} || echo ${#arr2[@]} ) ]] ; do
+        zip_out[$index]=${arr1[$index]}$sep${arr2[$index]}
         index=$(($index+1))
     done
     echo ${zip_out[@]}
 }
 
+prefzip() {
+    local arr1=( "${!1}" )
+    local arr2=( "${!2}" )
+    local -n zip_out=${3}
+    local sep="${4:-" "}" #separator for resulting tuples. $3 if set. else :
+    
+    [[ ${#arr1[@]} -ge ${#arr2[@]} ]] && use=2 || use=1
+    [[ ${#arr1[@]} -eq ${#arr2[@]} ]] && use=1
+
+    index=0
+
+    until [[ $index -eq $( [[ $use -eq 1 ]] && echo ${#arr1[@]} || echo ${#arr2[@]} ) ]] ; do
+        zip_out[$index]="${arr1[$index]}$sep${arr2[$index]}"
+        index=$(($index+1))
+    done
+    #echo ${zip_out[@]}
+}
+
 prefzipWith() {
-    func=${1}
-    arr1=( "${!2}" )
-    arr2=( "${!3}" )
-    additionalParameters=( "${!5}" )
+    local func=${1}
+    local arr1=( "${!2}" )
+    local arr2=( "${!3}" )
+    local additionalParameters=( "${!5}" )
     local -n refzipWith_out=${4} #pointer to external result array. allows for true return of arrays
 
     [[ ${#arr1[@]} -ge ${#arr2[@]} ]] && use=2 || use=1
@@ -182,13 +183,13 @@ prefzipWith() {
 }
 
 zipWith() {
-    func=$1
-    arr1=( "${!2}" )
-    arr2=( "${!3}" )
-    tuplesep="${4:-":"}"
-    tmpres=(zip arr1[@] arr2[@] $tuplesep)
-    zipWith_out=()
-    i=0
+    local func=$1
+    local arr1=( "${!2}" )
+    local arr2=( "${!3}" )
+    local tuplesep="${4:-":"}"
+    local tmpres=(zip arr1[@] arr2[@] $tuplesep)
+    local zipWith_out=()
+    local i=0
      while [[ $i -le ${#tmpres[@]} ]]; do
         arg1=$(echo ${tmpres[$i]}|cut -d "'" -f 2|cut -d"$tuplesep" -f 1)
         arg2=$(echo ${tempres[$i]}|cut -d"$tuplesep" -f 2|cut -d"'" -f 1)
