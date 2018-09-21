@@ -151,18 +151,20 @@ explength=3
 funcs=(makeHelloWorld speakL33T)
 testFactory prefchain funcs[@] sarr1[@] expres[@] $explength 4
 
-###TEST (REF)FOLDR
+###TEST ((P)REF)FOLDR
 ##TEST AGAINST sum
 expres=(10)
 explength=1
 testFactory foldr sum arr1[@] expres[@] $explength
-testFactory reffoldr sum arr1[@] expres[@] $explengtha 1
+testFactory reffoldr sum arr1[@] expres[@] $explength 1
+testFactory preffoldr sum arr1[@] expres[@] $explength 2
 
 ##TEST AGAINST concat
 expres=('test2 test with spaces quoted test "a quote"')
 explength=1
 testFactory foldr concat sarr1[@] expres[@] $explength
 testFactory reffoldr concat sarr1[@] expres[@] $explength 1
+testFactory preffoldr concat sarr1[@] expres[@] $explength 2
 
 ###TEST UNFOLD
 expres=(2 3 4 5 6)

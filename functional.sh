@@ -35,9 +35,8 @@ preffilter() {
     func=$1
     arr=("${!2}")
     local -n ret=${3}
-    inc=1
     for ((i=0;i<${#arr[@]};i++)); do
-        [[ $($func "${arr[$i]}") -eq 1 ]] && { ret[$inc]="${arr[$i]}" ; inc=$(($inc+1)) ; }
+        [[ $($func "${arr[$i]}") -eq 1 ]] && ret[$i]="${arr[$i]}"
     done
 }
 
@@ -45,8 +44,9 @@ preffilter() {
 refmap() {
     outarr=()
     tmparr=("${!2}")
+    optarg=(${@:3})
     for ((i=0;i<${#tmparr[@]};i++)); do
-        outarr[$i]=$($1 ${tmparr[$i]})
+        outarr[$i]=$($1 ${tmparr[$i]} ${optarg[@]})
     done
     echo ${outarr[@]}
 }
@@ -96,11 +96,10 @@ prefchain() {
 #Usage foldr callback [$init] arr[@]
 reffoldr() {
     fun=${1}
-    [[ $# -eq 3 ]] && init=("${2}")
-    arr=("${!3:-${!2}}")
-    res=${init:-0}
+    arr=("${!2}")
+    res=0
     for i in ${arr[@]}; do
-        res=( $($fun $res $i ) )
+        res=( $($fun "$res" "$i" ) )
     done
     echo ${res[@]}  
 }
@@ -116,6 +115,16 @@ foldr() {
     echo ${res[@]}  
 }
 
+preffoldr() {
+    fun=${1}
+    arr=("${!2}")
+    local -n preffoldr_res=${3}
+    preffolr_res=(0) 
+    for (( i=0;i<${#arr[@]};i++)); do
+        preffoldr_res[0]=$($fun "${preffoldr_res[0]}" "${arr[$i]}" )
+    done
+    #echo ${res[@]}  
+}
 #usage: unfold callback [$init] $limit [$step] => []
 unfold() {
     fun=${1}
@@ -175,28 +184,27 @@ prefzipWith() {
     [[ ${#arr1[@]} -ge ${#arr2[@]} ]] && use=2 || use=1
     [[ ${#arr1[@]} -eq ${#arr2[@]} ]] && use=1
 
-    index=0
-    while [[ $index -le $( [[ $use -eq 1 ]] && echo ${#arr1[@]} || echo ${#arr2[@]} ) ]] ; do
-        refzipWith_out[$index]=$( $func "${arr1[$index]}" "${arr2[$index]}" "${additionalParameters[@]}" )
-        index=$(($index+1))
+    [ $use == 1 ] && length=${#arr1[@]} || length=${#arr2[@]}
+    for ((i=0; i<$length; i++ )); do
+        zipWith_out[$i]=$( $func "${arr1[$i]}" "${arr2[$i]}" "${additionalParameters[@]}" )
     done
 }
 
 zipWith() {
-    local func=$1
+    local func=${1}
     local arr1=( "${!2}" )
     local arr2=( "${!3}" )
-    local tuplesep="${4:-":"}"
-    local tmpres=(zip arr1[@] arr2[@] $tuplesep)
-    local zipWith_out=()
-    local i=0
-     while [[ $i -le ${#tmpres[@]} ]]; do
-        arg1=$(echo ${tmpres[$i]}|cut -d "'" -f 2|cut -d"$tuplesep" -f 1)
-        arg2=$(echo ${tempres[$i]}|cut -d"$tuplesep" -f 2|cut -d"'" -f 1)
-        zipWith_out[$index]=$($func $arg1 $arg2)
-        index=$(($index+1))
+    local additionalParameters=( "${!5}" )
+    local -A zipWith_out 
+
+    [[ ${#arr1[@]} -ge ${#arr2[@]} ]] && use=2 || use=1
+    [[ ${#arr1[@]} -eq ${#arr2[@]} ]] && use=1
+
+    [ $use == 1 ] && length=${#arr1[@]} || length=${#arr2[@]}
+    for ((i=0; i<$length; i++ )); do
+        zipWith_out[$i]=$( $func "${arr1[$i]}" "${arr2[$i]}" "${additionalParameters[@]}" )
     done
-    echo ${res[@]}
+    echo ${zipWith_out[@]}
 }
 
 forEachParallel() {
