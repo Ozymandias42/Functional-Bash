@@ -6,8 +6,8 @@ arr1=(1 2 3 4)
 arr2=(5 6 7 8)
 
 ###TESTINPUT STRINGS
-sarr1=("test2" "test with spaces" 'quoted test "a quote"')
-sarr2=("bob" "this is alice" 'eve is listening')
+sarr1=($"test2" $"test with spaces" $'quoted test "a quote"')
+sarr2=($"bob" $"this is alice" $'eve is listening')
 
 ###TEST ARITHMETIC CALLBACK /W TWO ARGUMENTS
 sum() { echo $(($1+$2)) ; }
@@ -17,16 +17,16 @@ add2(){ echo $(($1+2)) ; }
 times3(){ echo $(($1*3)) ; }
 
 ###TEST ARITHMETIC PREDICATE FUNCTION isEven
-isEven() { (( (${1}%2) == 0 )) && echo 1 || echo 0 ; }
+isEven() { [[ ${1}%2 -eq 0 ]] && echo $? ; }
 
 ###TEST PREDICATE FUNCTION ON STRINGS
-isLongerSix(){ [[ ${#1} -ge 6 ]] && echo 1 || echo 0 ; }
+isLongerSix(){ [[ ${#1} -ge 6 ]] && echo $? ; }
 
 ###TEST CALLBACK FUNCTION ON STRINGS
 makeHelloWorld() { echo "Hello World" ; }
 speakL33T(){ echo "${@//e/3}"  ; }
 
-concat(){ echo "$1 $2" ; }
+concat(){ echo $"${1} ${2}" ; }
 
 #testFactory func2test callback2test array2test[@] expres[@] explength ref[BOOL=1/0] pref[BOOL=1/0]
 testFactory() {
@@ -44,10 +44,10 @@ testFactory() {
     case $functype in 
         0)  res=($($func2test $callback ${arr2test[@]})) ;;
         1)  res=($($func2test $callback arr2test[@])) ;;
-        2)  local -A res
+        2)  local -a res
             $func2test $callback arr2test[@] res ;;
         3)  res=($($func2test callback[@] arr2test[@])) ;;
-        4)  local -A res
+        4)  local -a res
             $func2test callback[@] arr2test[@] res ;;
     esac
     reslength=${#res[@]}
@@ -83,6 +83,12 @@ testFactory reffilter isEven arr1[@] expres[@] $explength 1
 expres=("test with spaces" 'quoted test "a quote"')
 explength=2
 testFactory reffilter isLongerSix sarr1[@] expres[@] $explength 1
+
+###TESTS PREFFILTER
+##TEST AGAINST ARITHMETIC PREDICATE WITH ONE ARGUMENT
+expres=(2 4)
+explength=2
+testFactory preffilter isEven arr1[@] expres[@] $explength 2
 
 ###TESTS PREFFILTER
 ##TEST AGAINST STRING PREDICATE WITH ONE ARGUMENT

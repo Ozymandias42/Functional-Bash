@@ -1,83 +1,94 @@
 #!/bin/bash
 
 filter() {
-    func=$1
-    arr=(${@:2})
-    ret=()
-    inc=1
-    for ((i=0;i<${#arr[@]};i++)); do
-        [[ $($func "${arr[$i]}") -eq 1 ]] && { ret[$inc]="${arr[$i]}" ; inc=$(($inc+1)) ; }
+    local func=$1
+    local arr=($"${@:2}")
+    local -a ret=()
+	
+    for i in $"${arr[@]}"; do
+		[[ $($func $"${i}") ]] && ret+=( $"${i}" )
     done
-    echo ${ret[@]}
+    echo $"${ret[@]}"
 }
 
-#Variant on filter. Passing array name instead of elements as positional arguments
-#Makes passing of multiple arrays of varying sizes possible
-#Breaks functional purity through use of references though
-#Needs to be called: filter funcName arrName[@]
-#Other function is called filter funcName "${arrName[@]}"
+# Variant on filter. Passing array name instead of elements as positional arguments.
+# This function makes passing multiple arrays of varying sizes possible, too,
+# although it breaks functional purity through use of references.
+# Call it like so:
+#   filter funcName arrName[@]
+# Other function is called: 
+#   filter funcName "${arrName[@]}"
 reffilter() {
-    func=$1
-    arr=("${!2}")
-    ret=()
-    inc=1
-    for ((i=0;i<${#arr[@]};i++)); do
-        [[ $($func "${arr[$i]}") -eq 1 ]] && { ret[$inc]="${arr[$i]}" ; inc=$(($inc+1)) ; }
+    local func=$1
+    local arr=($"${!2}")
+    local -a ret=()
+    local inc=1
+    for i in $"${arr[@]}"; do
+        [[ $($func $"${i}") ]] && ret+=( $"${i}" )
     done
-    echo ${ret[@]}
+    echo $"${ret[@]}"
 }
 
 preffilter() { 
-#Variant w/o echo-return. needed when filtering space separated strings.
-#allows to "return" arrays with arbitrary content. No accidential separation via spaces possible.
-#needs to be passed the name of a global res array.
-#call like this: preffilter predicate arr[@] res
-    func=$1
-    arr=("${!2}")
+# Variant without echo-return. needed when filtering space separated strings.
+# This allows to "return" arrays with arbitrary content. No accidential separation via spaces possible.
+# Needs to be passed the name of a global res array.
+# Call it like so: 
+#   preffilter predicate arr[@] res
+    local func=$1
+    local -a arr=($"${!2}")
     local -n ret=${3}
-    for ((i=0;i<${#arr[@]};i++)); do
-        [[ $($func "${arr[$i]}") -eq 1 ]] && ret[$i]="${arr[$i]}"
+
+    for i in $"${arr[@]}"; do
+        [[ $($func $"${i}" ) ]] && ret+=( $"${i}" )
     done
 }
 
-#Usage refmap callback arr[@] => []
-refmap() {
-    outarr=()
-    tmparr=("${!2}")
-    optarg=(${@:3})
-    for ((i=0;i<${#tmparr[@]};i++)); do
-        outarr[$i]=$($1 ${tmparr[$i]} ${optarg[@]})
-    done
-    echo ${outarr[@]}
-}
-
-#Usage map callback ${arr[@]}
+# Call this function like so:
+#   map callback ${arr[@]}
 map() {
-    outarr=()
-    tmparr=("${@:2}")
-    for ((i=0;i<${#tmparr[@]};i++)); do
-        outarr[$i]=$($1 ${tmparr[$i]})
+    local func=$1
+    local outarr=()
+    local tmparr=($"${@:2}")
+    for i in $"${tmparr[@]}"; do
+        outarr+=( $"$($func $"${i}")" )
+
     done
-    echo ${outarr[@]}
+    echo $"${outarr[@]}"
+}
+
+# Call this function like so:
+#   refmap callback arr[@] => []
+refmap() {
+    local func=$1
+    local outarr=()
+    local tmparr=($"${!2}")
+    for i in $"${tmparr[@]}"; do
+        outarr+=( $"$( $func $"${i}" )" )
+    done
+    echo $"${outarr[@]}"
 }
 
 prefmap() {
+    local func=$1
+    local input_arr=($"${!2}")
     local -n outarr=${3}
-    input_arr=("${!2}")
-    for ((i=0;i<${#input_arr[@]};i++)); do
-        outarr[$i]=$($1 ${input_arr[$i]})
+    #for i in $"${input_arr[@]}"; do
+    for (( i=0 ; i<${#input_arr[@]} ; i++ )); do
+    #    outarr+=( $"$( $func $"${i}" )" )
+         outarr[$i]=$"$( $func $"${input_arr[$i]}" )"
     done
 }
 
 #Usage chain funcArr[] value[]
 chain() {
-    funcs=("${!1}")
-    input=("${!2}")
-    res=(${input[@]})
+    local funcs=("${!1}")
+    local input=("${!2}")
+    local res=(${input[@]})
     for func in ${funcs[@]}; do
             res=( $(refmap $func res[@]) )
     done
-    echo "${res[@]}"
+    echo $"${res[@]}"
 }
 
 prefchain() {
@@ -93,6 +104,16 @@ prefchain() {
         prefmap $func prefchain_res[@] prefchain_res
     done
 }
+
+
+#Usage foldr callback ${arr[@]}
+foldr() {
+    local fun=${1}
+    local arr=("${@:2}")
+    local res=0
+    for i in ${arr[@]}; do
+        res=( $"$($fun $"$res" $"$i" )" )
+
 #Usage foldr callback [$init] arr[@]
 reffoldr() {
     fun=${1}
@@ -101,21 +122,27 @@ reffoldr() {
     for i in ${arr[@]}; do
         res=( $($fun "$res" "$i" ) )
     done
-    echo ${res[@]}  
+    echo $"${res[@]}"  
 }
 
-#Usage foldr callback ${arr[@]}
-foldr() {
-    fun=${1}
-    arr=("${@:2}")
-    res=0
+#Usage foldr callback [$init] arr[@]
+reffoldr() {
+    local fun=${1}
+    local arr=("${!2}")
+    local res=0
     for i in ${arr[@]}; do
-        res=( $($fun "$res" "$i" ) )
+        res=( $"$($fun $"$res" $"$i" )" )
     done
-    echo ${res[@]}  
+    echo $"${res[@]}"  
 }
 
 preffoldr() {
+    local fun=${1}
+    local arr=("${!2}")
+    local -n preffoldr_res=${3}
+    local preffolr_res=(0) 
+    for (( i=0;i<${#arr[@]};i++)); do
+        preffoldr_res[0]=$"$($fun $"${preffoldr_res[0]}" $"${arr[$i]}" )"
     fun=${1}
     arr=("${!2}")
     local -n preffoldr_res=${3}
@@ -127,12 +154,12 @@ preffoldr() {
 }
 #usage: unfold callback [$init] $limit [$step] => []
 unfold() {
-    fun=${1}
+    local fun=${1}
     [[ $# -eq 3 ]] && init=("${2}") || init=0
-    limit=${3:-$2}
+    local limit=${3:-$2}
     [[ $# -eq 4 ]] && inc=("${4}") || step=1
-    out=()
-    range=( $(seq $init $step $limit)  ) 
+    local out=()
+    local range=( $(seq $init $step $limit)  )
     for i in ${range[@]} ; do
         out=( ${out[@]} $($fun $i) )
     done
@@ -207,19 +234,11 @@ zipWith() {
     echo ${zipWith_out[@]}
 }
 
-forEachParallel() {
-#$1=callback $2..N array to act on.
-    arr=(${@:2}) #Copy $2..N into own array
-    for i in ${arr[@]}; do
-        coproc $1 $i 
-    done
-}
-
 forEach() {
     func=${1}
     arr=( "${!2}" )
-    for ((i=0;i<${#arr[@]};i++));do
-        $func "${arr[$i]}" ${!3:@}
+    for i in $"${arr[@]}"; do
+        $func $"${$i}"
     done
 }
 
